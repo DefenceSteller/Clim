@@ -1,0 +1,140 @@
+
+{% extends './template.html' %}
+{% load static %}
+
+{% block body %}
+<div class="content-wrapper">
+    <div class="breadcrumb-wrap bg-f br-1">
+        <div class="container">
+            <div class="breadcrumb-title">
+                <h2>Request Details</h2>
+                <ul class="breadcrumb-menu list-style">
+                    <li><a href="/climatechanges/index/">Home</a></li>
+                    <li><a href="{% url 'my_tickets' %}">My Requests</a></li>
+                    <li>Details</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <section class="ptb-100 support-page">
+        <div class="container">
+            <div class="section-title style1 text-center mb-40">
+                <span>Support Center<img src="{% static 'img/section-shape.png' %}" alt="Image"></span>
+                <h2>{{ ticket.subject }}</h2>
+            </div>
+
+            <div class="row justify-content-center">
+                <div class="col-lg-9">
+                    <div class="support-card">
+                        <div class="support-card-header">
+                            <div class="ticket-meta">
+                                <div>
+                                    <h3>{{ ticket.subject }}</h3>
+                                    <p>Ticket conversation and updates</p>
+                                </div>
+                                <span class="status-badge header-badge
+                                {% if ticket.status == 'Resolved' %}status-resolved
+                                {% elif ticket.status == 'In Progress' %}status-progress
+                                {% else %}status-open{% endif %}">{{ ticket.status }}</span>
+                            </div>
+                        </div>
+                        <div class="support-card-body">
+                            <div class="ticket-info-grid">
+                                <div class="info-item"><span>Category</span><strong>{{ ticket.category }}</strong></div>
+                                <div class="info-item"><span>Status</span><strong>{{ ticket.status }}</strong></div>
+                                <div class="info-item"><span>Created</span><strong>{{ ticket.created_at|date:"d M Y, h:i A" }}</strong></div>
+                            </div>
+
+                            <h4 class="conversation-title">Conversation</h4>
+                            <div class="conversation-box">
+                                <div class="msg-item msg-owner">
+                                    <div class="msg-head">
+                                        <strong>{{ ticket.user.username }}</strong>
+                                        <span>Original Request</span>
+                                    </div>
+                                    <div class="msg-text">{{ ticket.description }}</div>
+                                </div>
+
+                                {% for msg in messages %}
+                                <div class="msg-item {% if msg.sender == ticket.user %}msg-owner{% else %}msg-staff{% endif %}">
+                                    <div class="msg-head">
+                                        <strong>{{ msg.sender.username }}</strong>
+                                        {% if msg.created_at %}<span>{{ msg.created_at|date:"d M Y, h:i A" }}</span>{% endif %}
+                                    </div>
+                                    <div class="msg-text">{{ msg.message }}</div>
+                                </div>
+                                {% empty %}
+                                <div class="no-replies">No replies yet. Send a message below.</div>
+                                {% endfor %}
+                            </div>
+
+                            <div class="reply-box">
+                                <h4>Send a Message</h4>
+                                <form method="POST">
+                                    {% csrf_token %}
+                                    <div class="form-group mb-3">
+                                        {{ form.message }}
+                                    </div>
+                                    <div class="reply-actions">
+                                        <button type="submit" class="btn style1">Send Message</button>
+                                        <a href="{% url 'my_tickets' %}" class="btn style2 support-secondary-btn">Back to Requests</a>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<style>
+.support-page .support-card { background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 15px 40px rgba(0,0,0,0.08); border:1px solid rgba(51,143,122,0.12); }
+.support-page .support-card-header { background:linear-gradient(135deg,#338F7A 0%,#024731 100%); color:#fff; padding:24px 30px; }
+.support-page .ticket-meta { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.support-page .support-card-header h3 { color:#fff; margin:0 0 4px; font-size:22px; font-weight:700; }
+.support-page .support-card-header p { margin:0; color:rgba(255,255,255,0.85); font-size:14px; }
+.support-page .support-card-body { padding:28px 30px; }
+.ticket-info-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:24px; }
+.info-item { background:#f6fbf9; border:1px solid #e2ece8; border-radius:12px; padding:12px 14px; }
+.info-item span { display:block; font-size:12px; text-transform:uppercase; letter-spacing:.4px; color:#6b7d78; margin-bottom:4px; font-weight:600; }
+.info-item strong { color:#1f2d3d; font-size:15px; }
+.conversation-title { font-size:20px; font-weight:700; margin:0 0 14px; color:#1f2d3d; }
+.conversation-box { background:linear-gradient(180deg,#f6fbf9 0%,#f3f6f5 100%); border:1px solid #e3ece9; border-radius:14px; padding:18px; margin-bottom:24px; }
+.msg-item { max-width:85%; padding:14px 16px; border-radius:14px; margin-bottom:12px; }
+.msg-item:last-child { margin-bottom:0; }
+.msg-owner { background:#fff; border:1px solid #e1ebe7; border-top-left-radius:4px; }
+.msg-staff { margin-left:auto; background:linear-gradient(135deg,#338F7A,#2b7a68); color:#fff; border-top-right-radius:4px; }
+.msg-head { display:flex; justify-content:space-between; gap:10px; align-items:center; margin-bottom:6px; font-size:13px; }
+.msg-head strong { font-size:14px; }
+.msg-staff .msg-head span, .msg-staff .msg-head strong { color:#fff; }
+.msg-owner .msg-head span { color:#6b7d78; }
+.msg-text { margin:0; line-height:1.6; white-space:pre-wrap; }
+.no-replies { text-align:center; color:#6b7d78; padding:10px; }
+.reply-box h4 { font-size:18px; font-weight:700; margin:0 0 10px; color:#1f2d3d; }
+.support-page .form-control { width:100%; border:1px solid #d8e3df; border-radius:10px; padding:12px 14px; background:#f9fbfa; color:#1f2d3d; min-height:110px; box-shadow:none; }
+.support-page .form-control:focus { border-color:#338F7A; background:#fff; box-shadow:0 0 0 3px rgba(51,143,122,0.12); outline:none; }
+.reply-actions { display:flex; gap:12px; flex-wrap:wrap; }
+.status-badge { display:inline-block; padding:6px 12px; border-radius:999px; font-size:13px; font-weight:600; }
+.header-badge { background:#fff; }
+.status-resolved { background:#e7f7ee; color:#1e7a4a; }
+.status-progress { background:#e7f0ff; color:#2456b3; }
+.status-open { background:#fff4d9; color:#9a6700; }
+.support-page .support-secondary-btn { background:#fff; color:#338F7A !important; border:1px solid #338F7A; }
+.support-page .support-secondary-btn:hover { background:#338F7A; color:#fff !important; }
+.theme-dark .support-page .support-card, .theme-dark .support-page .support-card-body { background:#111d1a; border-color:rgba(255,255,255,0.08); }
+.theme-dark .info-item { background:#162724; border-color:#24413a; }
+.theme-dark .info-item strong, .theme-dark .conversation-title, .theme-dark .reply-box h4 { color:#e8f2ef; }
+.theme-dark .conversation-box { background:#0f1917; border-color:#24413a; }
+.theme-dark .msg-owner { background:#162724; border-color:#24413a; color:#e8f2ef; }
+.theme-dark .support-page .form-control { background:#162724; color:#e8f2ef; border-color:#24413a; }
+@media (max-width: 767px) {
+    .ticket-info-grid { grid-template-columns:1fr; }
+    .msg-item { max-width:100%; }
+    .support-page .support-card-body { padding:20px; }
+    .reply-actions .btn { width:100%; }
+}
+</style>
+{% endblock %}

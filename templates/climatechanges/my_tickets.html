@@ -1,0 +1,119 @@
+
+{% extends './template.html' %}
+{% load static %}
+
+{% block body %}
+<div class="content-wrapper">
+    <div class="breadcrumb-wrap bg-f br-1">
+        <div class="container">
+            <div class="breadcrumb-title">
+                <h2>My Support Requests</h2>
+                <ul class="breadcrumb-menu list-style">
+                    <li><a href="/climatechanges/index/">Home</a></li>
+                    <li>My Requests</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <section class="ptb-100 support-page">
+        <div class="container">
+            <div class="section-title style1 text-center mb-40">
+                <span>Support Center<img src="{% static 'img/section-shape.png' %}" alt="Image"></span>
+                <h2>My Support Requests</h2>
+                <p class="mt-2">Track and manage all your submitted requests.</p>
+            </div>
+
+            <div class="support-card">
+                <div class="support-card-header d-flex align-items-center justify-content-between flex-wrap" style="gap:12px;">
+                    <div>
+                        <h3>Your Requests</h3>
+                        <p>View status and details of your tickets.</p>
+                    </div>
+                    <a href="{% url 'support' %}" class="btn style1 support-header-btn">Create New Request</a>
+                </div>
+                <div class="support-card-body">
+                    <div class="table-responsive">
+                        <table class="table support-table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Subject</th>
+                                    <th>Category</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ticket in tickets %}
+                                <tr>
+                                    <td class="fw-semibold">{{ ticket.subject }}</td>
+                                    <td>{{ ticket.category }}</td>
+                                    <td>
+                                        <span class="status-badge
+                                        {% if ticket.status == 'Resolved' %}status-resolved
+                                        {% elif ticket.status == 'In Progress' %}status-progress
+                                        {% else %}status-open{% endif %}">
+                                            {{ ticket.status }}
+                                        </span>
+                                    </td>
+                                    <td>{{ ticket.created_at|date:"d M Y" }}</td>
+                                    <td>
+                                        <a href="{% url 'ticket_detail' ticket.id %}" class="btn style1 btn-sm support-view-btn">View</a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-5">
+                                        <div class="empty-state">
+                                            <h5>No support requests found</h5>
+                                            <p>You haven't submitted any requests yet.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<style>
+.support-page .support-card {
+    background: #fff; border-radius: 16px; overflow: hidden;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.08); border: 1px solid rgba(51,143,122,0.12);
+}
+.support-page .support-card-header {
+    background: linear-gradient(135deg, #338F7A 0%, #024731 100%);
+    color: #fff; padding: 24px 30px;
+}
+.support-page .support-card-header h3 { color:#fff; margin:0 0 4px; font-size:22px; font-weight:700; }
+.support-page .support-card-header p { margin:0; color:rgba(255,255,255,0.85); font-size:14px; }
+.support-page .support-card-body { padding: 24px 28px; }
+.support-page .support-header-btn { background:#fff !important; color:#338F7A !important; border:1px solid #fff; }
+.support-page .support-header-btn:after,.support-page .support-header-btn:before { background:#eaf6f2; }
+.support-table thead th {
+    background: #f3faf7; color:#1f2d3d; font-weight:700; border-bottom: 2px solid #dfeee9;
+    padding: 14px 12px; white-space: nowrap;
+}
+.support-table tbody td { padding: 16px 12px; border-color:#edf3f1; color:#334; vertical-align: middle; }
+.support-table tbody tr:hover { background:#fbfefd; }
+.status-badge { display:inline-block; padding:6px 12px; border-radius:999px; font-size:13px; font-weight:600; }
+.status-resolved { background:#e7f7ee; color:#1e7a4a; }
+.status-progress { background:#e7f0ff; color:#2456b3; }
+.status-open { background:#fff4d9; color:#9a6700; }
+.support-view-btn { padding:8px 18px !important; font-size:14px; min-width:auto; }
+.empty-state h5 { margin-bottom:6px; color:#1f2d3d; }
+.empty-state p { margin:0; color:#6c7a89; }
+.theme-dark .support-page .support-card { background:#111d1a; border-color:rgba(255,255,255,0.08); }
+.theme-dark .support-page .support-card-body { background:#111d1a; }
+.theme-dark .support-table thead th { background:#162724; color:#e8f2ef; border-color:#24413a; }
+.theme-dark .support-table tbody td { color:#d7e5e1; border-color:#24413a; }
+.theme-dark .support-table tbody tr:hover { background:#142320; }
+@media (max-width: 767px) { .support-page .support-card-body { padding:16px; } }
+</style>
+{% endblock %}
+

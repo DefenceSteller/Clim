@@ -1,0 +1,389 @@
+{% extends './template.html' %}
+{% load static %}
+
+{% block body %}
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+
+<style>
+    body {
+        background-color: #f4f7fb;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .dashboard-container {
+        padding-top: 150px;
+        padding-bottom: 50px;
+    }
+
+    .dashboard-title {
+        font-weight: 800;
+        color: #243447;
+    }
+
+    .dashboard-subtitle {
+        color: #718096;
+    }
+
+    .card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+        margin-bottom: 25px;
+        overflow: hidden;
+    }
+
+    .card-header {
+        background: #2c3e50;
+        color: white;
+        padding: 16px 20px;
+        font-weight: 600;
+        border: none;
+    }
+
+    .metric-card {
+        color: white;
+        padding: 22px 15px;
+        border-radius: 12px;
+        text-align: center;
+        min-height: 135px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        margin-bottom: 20px;
+    }
+
+    .metric-value {
+        font-size: 28px;
+        font-weight: 800;
+        margin-bottom: 8px;
+    }
+
+    .metric-label {
+        font-size: 13px;
+        font-weight: 600;
+        opacity: 0.95;
+    }
+
+    .metric-blue {
+        background: linear-gradient(135deg, #2c3e50, #3498db);
+    }
+
+    .metric-red {
+        background: linear-gradient(135deg, #e67e22, #e74c3c);
+    }
+
+    .metric-green {
+        background: linear-gradient(135deg, #11998e, #38ef7d);
+    }
+
+    .metric-purple {
+        background: linear-gradient(135deg, #654ea3, #9b59b6);
+    }
+
+    .metric-dark {
+        background: linear-gradient(135deg, #232526, #414345);
+    }
+
+    .table-container {
+        max-height: 420px;
+        overflow-y: auto;
+    }
+
+    .table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        white-space: nowrap;
+    }
+
+    .filter-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+
+    .chart-body {
+        padding: 20px;
+        overflow-x: auto;
+    }
+
+    .chart-body .plotly-graph-div {
+        min-width: 0;
+    }
+
+    .section-heading {
+        font-weight: 700;
+        color: #34495e;
+        margin-bottom: 20px;
+    }
+
+    .info-note {
+        background: #fff8e8;
+        border-left: 4px solid #e67e22;
+        border-radius: 8px;
+        padding: 15px 18px;
+        color: #5f4b32;
+    }
+
+    @media(max-width: 768px) {
+        .dashboard-container {
+            padding-top: 110px;
+        }
+
+        .dashboard-title {
+            font-size: 24px;
+        }
+
+        .metric-value {
+            font-size: 23px;
+        }
+
+        .filter-form {
+            display: block !important;
+        }
+
+        .filter-form .form-select {
+            margin-bottom: 12px;
+        }
+    }
+</style>
+
+<div class="container-fluid dashboard-container">
+
+    <!-- HEADER -->
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <h1 class="dashboard-title">
+                Global Disaster Trends & Prediction
+            </h1>
+
+            <p class="dashboard-subtitle">
+                Historical disaster analysis, anomaly detection,
+                and statistical disaster-frequency forecasting
+            </p>
+
+            <hr class="mt-4">
+        </div>
+    </div>
+
+    <!-- ERROR MESSAGE -->
+    {% if error_message %}
+    <div class="alert alert-danger alert-dismissible fade show">
+        <strong>Dashboard Error:</strong>
+        {{ error_message }}
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert">
+        </button>
+    </div>
+    {% endif %}
+
+    <!-- COUNTRY AND DISASTER FILTERS -->
+    <div class="row mb-4">
+        <div class="col-lg-8 offset-lg-2">
+            <div class="filter-card">
+                <form method="GET" action="" class="filter-form d-flex align-items-center gap-3">
+
+                    <label for="country" class="form-label fw-bold mb-0">
+                        Select Country:
+                    </label>
+
+                    <select name="country"
+                            id="country"
+                            class="form-select"
+                            onchange="this.form.submit()">
+
+                        {% for country in country_list %}
+                            <option value="{{ country }}"
+                                {% if country == selected_country %}selected{% endif %}>
+                                {{ country }}
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                    <label for="disaster" class="form-label fw-bold mb-0">
+                        Disaster:
+                    </label>
+
+                    <select name="disaster"
+                            id="disaster"
+                            class="form-select"
+                            onchange="this.form.submit()">
+
+                        {% for disaster in disaster_types %}
+                            <option value="{{ disaster }}"
+                                {% if disaster == selected_disaster %}selected{% endif %}>
+                                {{ disaster }}
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- OVERVIEW METRICS -->
+    <h5 class="section-heading">
+        Disaster Analytics Overview
+    </h5>
+
+    <div class="row">
+
+        <div class="col-xl col-md-4 col-sm-6">
+            <div class="metric-card metric-blue">
+                <div class="metric-value">{{ total_countries }}</div>
+                <div class="metric-label">COUNTRIES ANALYZED</div>
+            </div>
+        </div>
+
+        <div class="col-xl col-md-4 col-sm-6">
+            <div class="metric-card metric-red">
+                <div class="metric-value">{{ anomaly_count }}</div>
+                <div class="metric-label">DISASTER PATTERN OUTLIERS</div>
+            </div>
+        </div>
+
+        <div class="col-xl col-md-4 col-sm-6">
+            <div class="metric-card metric-green">
+                <div class="metric-value">{{ r2_score }}</div>
+                <div class="metric-label">TEST R² SCORE</div>
+            </div>
+        </div>
+
+        <div class="col-xl col-md-4 col-sm-6">
+            <div class="metric-card metric-purple">
+                <div class="metric-value">{{ recent_avg }}</div>
+                <div class="metric-label">RECENT 5-YEAR AVG. DISASTERS</div>
+            </div>
+        </div>
+
+        <div class="col-xl col-md-4 col-sm-6">
+            <div class="metric-card metric-dark">
+                <div class="metric-value">{{ rmse }}</div>
+                <div class="metric-label">TEST RMSE</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- DISASTER TREND AND FORECAST -->
+    <h5 class="section-heading">
+        Disaster Trend & Forecast Analysis
+    </h5>
+
+    <div class="row">
+
+        <!-- TREND CHART -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    Historical Disaster Trend & Future Prediction
+                </div>
+
+                <div class="chart-body">
+                    {% if trend_chart_div %}
+                        {{ trend_chart_div|safe }}
+                    {% else %}
+                        <p class="text-muted text-center">
+                            No disaster trend data available.
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- FORECAST TABLE -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    10-Year Disaster Forecast
+                </div>
+
+                <div class="card-body p-0 table-container">
+                    <table class="table table-hover table-striped text-center mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Year</th>
+                                <th>Predicted Disasters</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for item in forecast_summary %}
+                            <tr>
+                                <td><strong>{{ item.year }}</strong></td>
+                                <td class="text-danger fw-bold">
+                                    {{ item.predicted_disasters|floatformat:2 }}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="2" class="text-muted">
+                                    No forecast data available.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- COMPARATIVE ANALYSIS -->
+    <h5 class="section-heading mt-3">
+        Regional Disaster Comparison
+    </h5>
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    Top 10 Countries by Recent Disaster Frequency
+                </div>
+
+                <div class="chart-body">
+                    {% if impact_chart_div %}
+                        {{ impact_chart_div|safe }}
+                    {% else %}
+                        <p class="text-muted text-center">
+                            No regional comparison data available.
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODEL INFORMATION / DISCLAIMER -->
+    <div class="row">
+        <div class="col-12">
+            <div class="info-note mb-4">
+                <strong>Important prediction note:</strong>
+                This dashboard uses historical annual disaster counts and Ridge
+                Regression to estimate future disaster frequency. Anomaly detection
+                identifies unusual historical patterns. These results are statistical
+                estimates, not official emergency alerts. The dashboard does not
+                predict exact disaster dates, locations, severity, or casualties.
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="text-center mt-4 mb-3">
+        <p class="text-muted small">
+            Global Disaster Analytics Dashboard |
+            Historical Disaster Records |
+            10-Year Statistical Forecast
+        </p>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+{% endblock %}
